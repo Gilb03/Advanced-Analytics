@@ -1,5 +1,5 @@
 #READ DATA FROM SERVER 
-house1 <- read.csv("/var/www/html/jlee141/econdata/housing/mls2018_smpl.csv")
+house1 <- read.csv("http://bigblue.depaul.edu/jlee141/econdata/housing/mls2018_smpl.csv")
 
 # DESCRIPTIVE STATISTICS PER VARIABLE
 
@@ -105,8 +105,10 @@ hist(house1$SQFT)
 
 #LOG HOUSE PRICE 
 
-plot(LOG_PRICE, LOG_SQFT, main="Scatter Plot of Log_Price by Log_SQFT", col="blue")
-abline(lm(LOG_SQFT~LOG_PRICE),col="red")
+plot(house1$LOG_PRICE, house1$LOG_SQFT, main="Scatter Plot of Log_Price by Log_SQFT", col="blue")
+abline(lm(house1$LOG_SQFT~house1$LOG_PRICE),col="red")
+
+
 
 
 
@@ -121,3 +123,44 @@ set.seed(1937028)
 train_ind <- sample(nrow(house1),round(0.75*nrow(house1)))
 train     <- house1[train_ind,]
 test      <- house1[-train_ind,]
+
+#REGRESSION MODEL TRAINING DATA
+#Model1 : LOG_PRICE= b0 + b1 LOG_SQFT + e
+#Model2 : LOG_PRICE= b0 + b1 LOG_SQFT + b2 BEDROOM + b3 BATHROOM + e
+#Model3 : LOG_PRICE= b0 + b1 LOG_SQFT + b2 BEDROOM + b3 BATHROOM + b4 GARAGE+ b5 FIREPLACE+ b6 AGEBLD + b7 SOLD_30DAY + e
+#Model4 : Model 3 with stepwise and direction = both  
+
+Model1 <- lm(LOG_PRICE~LOG_SQFT,data=train)
+Model2 <- lm(LOG_PRICE~BEDROOM+BATHROOM,data = train)
+Model3 <- lm(LOG_PRICE~BEDROOM+BATHROOM+GARAGE+FIREPLACE+AGEBLD+SOLD_30DAY, data=train)
+Model4 <- step(lm(LOG_PRICE~BEDROOM+BATHROOM+GARAGE+FIREPLACE+AGEBLD+SOLD_30DAY, data=train), direction="both")
+
+
+#PREDICTION 
+prediction1 <- predict(Model1, newdata = test)
+prediction2 <- predict(Model2, newdata = test)
+prediction3 <- predict(Model3, newdata = test)
+prediction4 <- predict(Model4, newdata = test)
+
+
+# MSE VS RMSE MODELS 
+pe1 <- residuals(Model1, newdata=test)
+pe2 <- residuals(Model2, newdata=test)
+pe3 <- residuals(Model3, newdata=test)
+pe4 <- residuals(Model4, newdata=test)
+
+#MSE v RMSE 4 models
+MSE1 <- mean(pe1^2)
+MSE2 <- mean(pe2^2)
+MSE3 <- mean(pe3^2)
+MSE4 <- mean(pe4^2)
+
+RMSE1 <- MSE1^0.5
+RMSE2 <- MSE2^0.5
+RMSE3 <- MSE3^0.5
+RMSE4 <- MSE4^0.5
+
+print(c(RMSE1, RMSE2, RMSE3, RMSE4))
+
+#rmse3 and rmse4 have the lowest value compared to rmse1 and rmse2.
+#model 3 gives the best performance, then model 4 (off by about 0.000005)
