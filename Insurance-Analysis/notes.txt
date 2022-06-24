@@ -1,6 +1,0 @@
-Steps 
-
-1. finish finding interesting measures from each csv group ( train/test)
-then add them to the summary statistics part. 
-
-2. find a way to either merge files or use 
